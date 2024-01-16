@@ -1,8 +1,8 @@
 [
   {
     "username": "User1",
-    "salt": "JDJiJDEyJFVsMjVhRTc0TUIvaTlQdXlxN09yaU8=",
-    "hashed_password": "JDJiJDEyJFVsMjVhRTc0TUIvaTlQdXlxN09yaU9vLlhLUTZORERHQUNuSExsbnJWQVd3b1N3dEdEaWM2",
-    "session_token": "1e180f3f-b45e-4c22-b12c-337af689d91e"
+    "salt": "JDJiJDEyJHBTTk5UUWwuVFdtcGx5Y0pnWXRscS4=",
+    "hashed_password": "JDJiJDEyJHBTTk5UUWwuVFdtcGx5Y0pnWXRscS4yQjZjUC5YU3g4UlIzSVVBM1hDbXFxYkVyV1VPZkpp",
+    "session_token": "f23e0a6b-b973-45d3-b0e4-234f37343212"
   }
 ]

@@ -27,7 +27,7 @@ def generate_passes(user_index):
     print(f"Hashed Password: {hashed_password}")
     print()
 
-    return {'username': username, 'salt': salt, 'hashed_password': hashed_password}
+    return {'username': username, 'password': password, 'salt': salt, 'hashed_password': hashed_password}
 
 def hash_password(password):
     salt = bcrypt.gensalt()
@@ -37,10 +37,14 @@ def hash_password(password):
 # Generowanie 6 par loginu i hasła
 users_credentials = [generate_passes(i) for i in range(1, 2)]
 
+
+with open("auxiliary.txt", 'w') as auxiliary_file:
+    auxiliary_file.write('This file is generated only for your convenience during testing, so you know what your user password is, \n without the need to copy it on creation from the console. \n It plays no role in the application. In real-world your password shall be set by you and NEVER TO BE STORED by the application. \n \n Therefore, the original passes were NOT saved to  operators.json, which is the file used by the app. \n \n  IT ONLY STORES HASHES! \n \n')
+    json.dump([{k: v for k, v in user.items()} for user in users_credentials], auxiliary_file, indent=2, cls=BytesEncoder)
 # Zapisywanie do pliku JSON z użyciem niestandardowego kodera
-filename = "operators.json"
-with open(filename, 'w') as json_file:
+with open("operators.json", 'w') as json_file:
     # Usunięcie oryginalnych haseł przed zapisem do pliku JSON
     json.dump([{k: v for k, v in user.items() if k != 'password'} for user in users_credentials], json_file, indent=2, cls=BytesEncoder)
 
-print(f"User credentials saved to {filename}")
+print(f"Users salts and passwords hashes saved to operators.json")
+print(f"\n For your convenience during teting, orginal passes were saved to 'auxiliary.txt' so you know what your user password is, without the need to copy it right now from the console. \n In real-world your password shall be set by you and  is NEVER TO BE STORED by the application. \n Therefore, the original passes were NOT saved to  'operators.json', which is used by the app!")

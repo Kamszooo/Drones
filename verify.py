@@ -33,7 +33,7 @@ def main():
     operators = load_operators(operators_filename)
 
     # Przyjmowanie danych JSON z loginem i hasłem
-    input_data = '{"username": "User1", "password": "eajRCiEaaHYF"}'
+    input_data = '{"username": "User1", "password": "ywFzCOiwxYuf"}'
     login_credentials = json.loads(input_data)
 
     username = login_credentials['username']
