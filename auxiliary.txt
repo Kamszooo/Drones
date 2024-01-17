@@ -1,0 +1,16 @@
+This file is generated only for your convenience during testing, so you know what your user password is, 
+ without the need to copy it on creation from the console. 
+ It plays no role in the application. In real-world your password shall be set by you and NEVER TO BE STORED by the application. 
+ 
+ Therefore, the original passes were NOT saved to  operators.json, which is the file used by the app. 
+ 
+  IT ONLY STORES HASHES! 
+ 
+[
+  {
+    "username": "User1",
+    "password": "JYkmPzPqfR1f",
+    "salt": "JDJiJDEyJDV6aE9wVjBkckUvcE9Bb241TlhxRS4=",
+    "hashed_password": "JDJiJDEyJDV6aE9wVjBkckUvcE9Bb241TlhxRS5jc0VDMlB2ZzRjbUVDTUlic1BtV0RhREJpTlBWY1Z5"
+  }
+]
