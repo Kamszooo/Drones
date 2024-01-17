@@ -1,3 +1,7 @@
+import threading
+import time
+from sched import scheduler
+
 from flask import Flask, request
 from PRNG import MT19937
 from TRNG import generate_TRN
@@ -36,16 +40,35 @@ def authenticate_user(operators, username, password):
 operators = load_operators('operators.json')
 active_tokens = {}
 
-# Przykładowa lokalizacja
+# Początkowa lokalizacja
 current_location = {'X': 50, 'Y': 50}
-next_waypoint = {}
+next_waypoint = {'X': 51, 'Y': 49}
 
 mt19937_instance = MT19937(seed=generate_TRN(32))
 #TO DO gdy przejdzie przez polowę internal states generate new trn and new instance of mt19937
 
-for _ in range(3):
-    print(mt19937_instance.extract_number())
+# Funkcja do generowania nowej lokalizacji
+def generate_new_location():
+    global current_location
+    global mt19937_instance
 
+    while True:
+        # Generowanie nowych współrzędnych
+        new_x = mt19937_instance.extract_number() / 4294967295 * 100 #maximal number possible to drawn is 2^32-1 = 4294967295
+        new_y = mt19937_instance.extract_number() / 4294967295 * 100
+
+        # Aktualizacja lokalizacji
+        current_location = {'X': new_x, 'Y': new_y}
+
+        # Wydruk dla celów debugowania
+        print(f"Generated new location: {current_location}")
+
+        # Oczekaj 4 sekundy przed następnym generowaniem lokalizacji
+        time.sleep(10)
+
+# Uruchomienie funkcji w osobnym wątku
+location_thread = threading.Thread(target=generate_new_location)
+location_thread.start()
 
 @app.route('/')
 def hello():
@@ -58,8 +81,6 @@ def get_location():
 @app.route('/api/set_location', methods=['POST'])
 def set_location():
     data = request.get_json()
-    print("data[token]: " + str(data['token']))
-    print("jest inny niz obecne w active_tokens: " + str(active_tokens.values()))
     if data['token'] in active_tokens.values():
         if 100 >= data['X'] >= 0 and 100 >= data['Y'] >= 0:
             new_location = {'X': data['X'], 'Y': data['Y']}
@@ -114,6 +135,7 @@ def authenticate():
          #   save_operators('operators.json', operators)
         else:
             return "Authentication failed. Invalid username or password."
+
 
 if __name__ == '__main__':
     app.run(debug=True)
