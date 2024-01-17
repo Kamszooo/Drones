@@ -37,6 +37,7 @@ class MT19937:
         y = y ^ (y >> self.l)
 
         self.index += 1
+        print(self.get_state_fraction())
         return y & 0xffffffff
 
 
@@ -50,16 +51,23 @@ class MT19937:
             self.MT[i] = self.MT[(i + self.m) % self.n] ^ xA
 
 
-    def display_state(self):
-        print("Internal State:")
+    def display_states(self):
+        print("Internal States:")
         for i in range(self.n):
             print(f"MT[{i}] = {self.MT[i]}")
         print(f"index = {self.index}")
         print()
 
+    def get_state_fraction(self):
+        # Calculate the fraction of states passed
+        fraction_passed = self.index / self.n
+        return fraction_passed
 
+'''
 if __name__ == '__main__':
     mt19937_instance = MT19937(seed=0xcd7d660bbec1cfe8a72ccb85d218c5f5)
 
     for _ in range(3):
         print(mt19937_instance.extract_number())
+        
+        '''

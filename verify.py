@@ -18,15 +18,12 @@ def save_operators(filename, operators):
 def authenticate_user(operators, username, password):
     for operator in operators:
         if operator['username'] == username:
-            # Dekodowanie soli z base64
             decoded_salt = base64.b64decode(operator['salt'])
             hashed_attempt = bcrypt.hashpw(password.encode('utf-8'), decoded_salt)
             encoded_original_hash = base64.b64decode(operator['hashed_password'])
             return hashed_attempt == encoded_original_hash
     return False
 
-def generate_session_token():
-    return str(uuid.uuid4())
 
 def main():
     operators_filename = 'operators.json'
@@ -42,7 +39,7 @@ def main():
     # Weryfikacja użytkownika
     if authenticate_user(operators, username, password):
         # Generowanie i nadawanie session_token
-        session_token = generate_session_token()
+        session_token = str(uuid.uuid4())
         print(f"User {username} authenticated. Session Token: {session_token}")
 
         # Dodanie session_token do danych operatora
