@@ -1,13 +1,9 @@
 import threading
 import time
-from sched import scheduler
-
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template
 from PRNG import MT19937
 from TRNG import generate_TRN
-
 import json
-import uuid
 import bcrypt
 import base64
 app = Flask(__name__)
@@ -42,49 +38,47 @@ active_tokens = {}
 
 drawn_numbers = []
 
-# Początkowa lokalizacja
-current_location = {'X': 50, 'Y': 50}
-next_waypoint = {'X': 51, 'Y': 49}
+# Initial location
+current_location = {'X': 50, 'Y': 50, 'Z': 50}
+next_waypoint = {'X': 51, 'Y': 49, 'Z': 49}
 
+#generate instance of the PRNG Twister with the seed drawn by TRNG
 mt19937_instance = MT19937(seed=generate_TRN(32))
-#TO DO gdy przejdzie przez polowę internal states generate new trn and new instance of mt19937
 
-# Funkcja do generowania nowej lokalizacji
 
 def updating():
-  #  global current_location
-   # global next_waypoint
-    # global mt19937_instance
-
+  #  every 5 secund drawn move from the location to the next waypoint and draw new next waypoint
     while True:
         global next_waypoint
         global current_location
         global mt19937_instance
-        print("Next waypoint po śnie:" + str(next_waypoint))
+ #       print("Next waypoint po śnie:" + str(next_waypoint))
         print("Current location:  " + str(current_location))
         print("Next waypoint:  " + str(next_waypoint))
-        # Generowanie nowych współrzędnych
-        if mt19937_instance.get_state_fraction() > 0.02:  # TO DO CHANGE
+
+
+        if mt19937_instance.get_state_fraction() > 0.5:  # when PRNG has run through more than half of its internal states, create a new instance with the fresh seed
             mt19937_instance = MT19937(seed=generate_TRN(32))
             print("Created a new instance of MT19937")
         new_random = mt19937_instance.extract_number()
         drawn_numbers.append(new_random)
-        new_x = new_random / 4294967295 * 100 #maximal number possible to drawn is 2^32-1 = 4294967295
+        new_x = new_random / 4294967295 * 100 # the maximum number possible to drawn is 2^32-1 = 4294967295
         new_random = mt19937_instance.extract_number()
         drawn_numbers.append(new_random)
         new_y = new_random / 4294967295 * 100
+        new_random = mt19937_instance.extract_number()
+        drawn_numbers.append(new_random)
+        new_z = new_random / 4294967295 * 100
 
-        # Aktualizacja lokalizacji
+        # update location and new next waypoint
         current_location = next_waypoint
-        next_waypoint = {'X': new_x, 'Y': new_y}
+        next_waypoint = {'X': new_x, 'Y': new_y, 'Z': new_z}
 
-        # Wydruk dla celów debugowania
+
         print(f"Current location changed to the previous next waypoint and set at {current_location}. New next waypoint drawn at: {next_waypoint}")
-        print("Next waypoint przed snem:" + str(next_waypoint))
-        # Oczekaj 4 sekundy przed następnym generowaniem lokalizacji
-        time.sleep(10)
+     #   print("Next waypoint before 5 s sleep:" + str(next_waypoint))
+        time.sleep(5)
 
-# Uruchomienie funkcji w osobnym wątku
 location_thread = threading.Thread(target=updating)
 location_thread.start()
 
@@ -104,8 +98,8 @@ def get_next_waypoint():
 def set_location():
     data = request.get_json()
     if data['token'] in active_tokens.values():
-        if 100 >= data['X'] >= 0 and 100 >= data['Y'] >= 0:
-            new_location = {'X': data['X'], 'Y': data['Y']}
+        if 100 >= data['X'] >= 0 and 100 >= data['Y'] >= 0 and 100 >= data['Z'] >= 0:
+            new_location = {'X': data['X'], 'Y': data['Y'], 'Z': data['Z']}
             current_location.update(new_location)
             return {'status': 'success', 'message': 'Location updated successfully'}
         else:
@@ -118,8 +112,8 @@ def set_next_waypoint():
     data = request.get_json()
     print(active_tokens.values())
     if data['token'] in active_tokens.values():
-        if 100 >= data['X'] >= 0 and 100 >= data['Y'] >= 0:
-            new_waypoint = {'X': data['X'], 'Y': data['Y']}
+        if 100 >= data['X'] >= 0 and 100 >= data['Y'] >= 0 and 100 >= data['Z'] >= 0:
+            new_waypoint = {'X': data['X'], 'Y': data['Y'], 'Z': data['Z']}
             next_waypoint.update(new_waypoint)
             return {'status': 'success', 'message': 'Next planned waypoint updated successfully'}
         else:
@@ -137,25 +131,16 @@ def authenticate():
         password_received = data['password']
 
         if authenticate_user(operators, username_received, password_received):
-            if mt19937_instance.get_state_fraction() > 0.02: # TO DO CHANGE
+            if mt19937_instance.get_state_fraction() > 0.5: # when PRNG has run through more than half of its internal states, create a new instance with the fresh seed
 
                 mt19937_instance = MT19937(seed=generate_TRN(32))
                 print("Created a new instance of MT19937")
-            # Generowanie i nadawanie session_token
-            session_token = mt19937_instance.extract_number()
+            session_token = mt19937_instance.extract_number() #generate the session token
             drawn_numbers.append(session_token)
             active_tokens[username_received] = session_token
             print(active_tokens)
-            ''' 
-            # Dodanie session_token do danych operatora
-            for operator in operators:
-                if operator['username'] == username_received:
-                    operator['session_token'] = session_token '''
 
             return "User " + username_received + " authenticated. Session Token: " + str(active_tokens[username_received])
-
-            # Zapisanie zaktualizowanej listy operatorów
-         #   save_operators('operators.json', operators)
         else:
             return "Authentication failed. Invalid username or password."
 
@@ -169,8 +154,7 @@ def login():
         password_received = request.form['password']
 
         if authenticate_user(operators, username_received, password_received):
-            # Utwórz sesję użytkownika i przekieruj go do strony głównej lub innej docelowej strony
-            if mt19937_instance.get_state_fraction() > 0.02:
+            if mt19937_instance.get_state_fraction() > 0.5: # when PRNG has run through more than half of its internal states, create a new instance with the fresh seed
                 mt19937_instance = MT19937(seed=generate_TRN(32))
                 print("Created a new instance of MT19937")
 
@@ -181,7 +165,6 @@ def login():
             return render_template('login.html', feedback="User " + username_received + " authenticated. Session Token: " + str(active_tokens[username_received]))
 
         else:
-            # Jeżeli uwierzytelnianie nie powiedzie się, można przekierować użytkownika z powrotem do strony logowania z komunikatem
             return render_template('login.html', message='Invalid username or password')
 
     return render_template('login.html')
@@ -191,16 +174,18 @@ def login():
 def leak():
     return drawn_numbers
 
+
+
 if __name__ == '__main__':
     app.run()
 
 
-'''
+''' The run version with SSL certificates:
 if __name__ == '__main__':
     ssl_cert_path = 'C:\\Users\\Wszemir\\dronessystem.mt.crt'
     ssl_key_path = 'C:\\Users\\Wszemir\\dronessystem.mt.key'
 
     app.run(host='0.0.0.0', ssl_context=(ssl_cert_path, ssl_key_path))
-
-
 '''
+
+

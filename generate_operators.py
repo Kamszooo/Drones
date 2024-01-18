@@ -35,7 +35,7 @@ def hash_password(password):
     return salt, hashed_password
 
 # Generowanie 6 par loginu i hasła
-users_credentials = [generate_passes(i) for i in range(1, 2)]
+users_credentials = [generate_passes(i) for i in range(1, 4)]
 
 
 with open("auxiliary.txt", 'w') as auxiliary_file:
