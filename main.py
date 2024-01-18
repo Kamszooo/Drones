@@ -2,7 +2,7 @@ import threading
 import time
 from sched import scheduler
 
-from flask import Flask, request
+from flask import Flask, request, render_template, redirect, url_for
 from PRNG import MT19937
 from TRNG import generate_TRN
 
@@ -159,9 +159,48 @@ def authenticate():
         else:
             return "Authentication failed. Invalid username or password."
 
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    global mt19937_instance
+    global active_tokens
+    if request.method == 'POST':
+        username_received = request.form['username']
+        password_received = request.form['password']
+
+        if authenticate_user(operators, username_received, password_received):
+            # Utwórz sesję użytkownika i przekieruj go do strony głównej lub innej docelowej strony
+            if mt19937_instance.get_state_fraction() > 0.02:
+                mt19937_instance = MT19937(seed=generate_TRN(32))
+                print("Created a new instance of MT19937")
+
+            session_token = mt19937_instance.extract_number()
+            drawn_numbers.append(session_token)
+            active_tokens[username_received] = session_token
+
+            return render_template('login.html', feedback="User " + username_received + " authenticated. Session Token: " + str(active_tokens[username_received]))
+
+        else:
+            # Jeżeli uwierzytelnianie nie powiedzie się, można przekierować użytkownika z powrotem do strony logowania z komunikatem
+            return render_template('login.html', message='Invalid username or password')
+
+    return render_template('login.html')
+
+
 @app.route('/api/leak', methods=['GET'])
 def leak():
     return drawn_numbers
 
 if __name__ == '__main__':
     app.run()
+
+
+'''
+if __name__ == '__main__':
+    ssl_cert_path = 'C:\\Users\\Wszemir\\dronessystem.mt.crt'
+    ssl_key_path = 'C:\\Users\\Wszemir\\dronessystem.mt.key'
+
+    app.run(host='0.0.0.0', ssl_context=(ssl_cert_path, ssl_key_path))
+
+
+'''
