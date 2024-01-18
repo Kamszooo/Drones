@@ -40,6 +40,8 @@ def authenticate_user(operators, username, password):
 operators = load_operators('operators.json')
 active_tokens = {}
 
+drawn_numbers = []
+
 # Początkowa lokalizacja
 current_location = {'X': 50, 'Y': 50}
 next_waypoint = {'X': 51, 'Y': 49}
@@ -48,26 +50,42 @@ mt19937_instance = MT19937(seed=generate_TRN(32))
 #TO DO gdy przejdzie przez polowę internal states generate new trn and new instance of mt19937
 
 # Funkcja do generowania nowej lokalizacji
-def generate_new_location():
-    global current_location
-    global mt19937_instance
+
+def updating():
+  #  global current_location
+   # global next_waypoint
+    # global mt19937_instance
 
     while True:
+        global next_waypoint
+        global current_location
+        global mt19937_instance
+        print("Next waypoint po śnie:" + str(next_waypoint))
+        print("Current location:  " + str(current_location))
+        print("Next waypoint:  " + str(next_waypoint))
         # Generowanie nowych współrzędnych
-        new_x = mt19937_instance.extract_number() / 4294967295 * 100 #maximal number possible to drawn is 2^32-1 = 4294967295
-        new_y = mt19937_instance.extract_number() / 4294967295 * 100
+        if mt19937_instance.get_state_fraction() > 0.02:  # TO DO CHANGE
+            mt19937_instance = MT19937(seed=generate_TRN(32))
+            print("Created a new instance of MT19937")
+        new_random = mt19937_instance.extract_number()
+        drawn_numbers.append(new_random)
+        new_x = new_random / 4294967295 * 100 #maximal number possible to drawn is 2^32-1 = 4294967295
+        new_random = mt19937_instance.extract_number()
+        drawn_numbers.append(new_random)
+        new_y = new_random / 4294967295 * 100
 
         # Aktualizacja lokalizacji
-        current_location = {'X': new_x, 'Y': new_y}
+        current_location = next_waypoint
+        next_waypoint = {'X': new_x, 'Y': new_y}
 
         # Wydruk dla celów debugowania
-        print(f"Generated new location: {current_location}")
-
+        print(f"Current location changed to the previous next waypoint and set at {current_location}. New next waypoint drawn at: {next_waypoint}")
+        print("Next waypoint przed snem:" + str(next_waypoint))
         # Oczekaj 4 sekundy przed następnym generowaniem lokalizacji
         time.sleep(10)
 
 # Uruchomienie funkcji w osobnym wątku
-location_thread = threading.Thread(target=generate_new_location)
+location_thread = threading.Thread(target=updating)
 location_thread.start()
 
 @app.route('/')
@@ -77,6 +95,10 @@ def hello():
 @app.route('/api/get_location', methods=['GET'])
 def get_location():
     return {'location': current_location}
+
+@app.route('/api/get_next_waypoint', methods=['GET'])
+def get_next_waypoint():
+    return {'next_waypoint': next_waypoint}
 
 @app.route('/api/set_location', methods=['POST'])
 def set_location():
@@ -115,12 +137,13 @@ def authenticate():
         password_received = data['password']
 
         if authenticate_user(operators, username_received, password_received):
-            if mt19937_instance.get_state_fraction() > 0.01: # TO DO CHANGE
+            if mt19937_instance.get_state_fraction() > 0.02: # TO DO CHANGE
 
                 mt19937_instance = MT19937(seed=generate_TRN(32))
                 print("Created a new instance of MT19937")
             # Generowanie i nadawanie session_token
             session_token = mt19937_instance.extract_number()
+            drawn_numbers.append(session_token)
             active_tokens[username_received] = session_token
             print(active_tokens)
             ''' 
@@ -136,6 +159,9 @@ def authenticate():
         else:
             return "Authentication failed. Invalid username or password."
 
+@app.route('/api/leak', methods=['GET'])
+def leak():
+    return drawn_numbers
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()

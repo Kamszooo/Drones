@@ -9,8 +9,8 @@ This file is generated only for your convenience during testing, so you know wha
 [
   {
     "username": "User1",
-    "password": "JYkmPzPqfR1f",
-    "salt": "JDJiJDEyJDV6aE9wVjBkckUvcE9Bb241TlhxRS4=",
-    "hashed_password": "JDJiJDEyJDV6aE9wVjBkckUvcE9Bb241TlhxRS5jc0VDMlB2ZzRjbUVDTUlic1BtV0RhREJpTlBWY1Z5"
+    "password": "5cEwQ1K5RRkL",
+    "salt": "JDJiJDEyJHVvTXJyM2ZQYWZ2ZFhKbFVRSkVxN2U=",
+    "hashed_password": "JDJiJDEyJHVvTXJyM2ZQYWZ2ZFhKbFVRSkVxN2VSRmFVTjhoL0RacVQ1b1oxZUNvSWczN1gxRG5qak9t"
   }
 ]
